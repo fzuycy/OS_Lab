@@ -3,6 +3,7 @@ package service;
 import pojo.Job;
 import pojo.Partition;
 
+import java.util.Collections;
 import java.util.LinkedList;
 
 public class InitialManager {
@@ -22,13 +23,45 @@ public class InitialManager {
         freeTable.add(new Partition(0,size,0));//将整块内存当做一个分区给分配表
     }
 
-    //这个功能之后再考虑
-//    public static boolean IniFreeTable(LinkedList<Partition> freeTable, LinkedList<Partition> occupyTable, Partition prePartition){
-//
-//        //这里prePartition是初始化设置时手动设置的场景中已被占用的分区(pid,size,start自行指定，合适就行)
-//        //看看能不能写一个随机数随机分配一下
-//
-//        boolean isInsert=false;
+
+    public static boolean IniFreeTable(LinkedList<Partition> freeTable, LinkedList<Partition> occupyTable, LinkedList<Partition> prePartitions){
+
+        //这里prePartition是初始化设置时手动设置的场景中已被占用的分区(pid,size,start自行指定，合适就行)
+        //看看能不能写一个随机数随机分配一下
+
+        boolean isInsert=false;
+
+        Collections.sort(prePartitions,Collections.reverseOrder());//升序,从小到大
+        //暂时先无脑添加
+        for (int i = 0; i < prePartitions.size(); i++) {
+            occupyTable.add(prePartitions.get(i));
+        }
+
+
+        if(freeTable.get(0).getStart()==0&&(freeTable.get(0).getSize()==MemorySum)){
+            freeTable.remove(0);
+        }
+        for (int i = 0; i < prePartitions.size(); i++) {
+            if(i==0){
+                if(prePartitions.get(i).getStart()!=0){
+                    freeTable.add(new Partition(-1,prePartitions.get(i).getStart(),0));
+                }
+                //freeTable.add(prePartitions.get(i));
+                //continue;
+            }else {
+                freeTable.add(new Partition(-1,(prePartitions.get(i).getStart()-prePartitions.get(i-1).getStart()-prePartitions.get(i-1).getSize()),prePartitions.get(i-1).getStart()+prePartitions.get(i-1).getSize()));
+
+            }
+            if(i+1==prePartitions.size()){
+
+                if((prePartitions.get(i).getStart()+prePartitions.get(i).getSize())!=MemorySum){
+                    freeTable.add(new Partition(-1,(MemorySum-(prePartitions.get(i).getStart()+prePartitions.get(i).getSize())),(prePartitions.get(i).getStart()+prePartitions.get(i).getSize())));
+                }
+                isInsert=true;
+            }
+        }
+
+
 //        if(MemorySum<prePartition.getSize()){
 //            System.out.println("初始化设置失败！预先模拟分配的作业过大");
 //        }else{
@@ -47,7 +80,8 @@ public class InitialManager {
 //                System.out.println("预分配的已占用分区冲突！");
 //            }
 //        }
-//        return isInsert;
-//
-//    }
+
+        return isInsert;
+
+    }
 }
